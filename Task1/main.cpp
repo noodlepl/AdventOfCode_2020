@@ -20,11 +20,14 @@ int main() {
     int result = -1;
     for(auto it1 = data.begin(); it1 != data.end(); ++it1) {
         for (auto it2 = it1 + 1; it2 != data.end(); ++it2) {
-            if (*it1 + *it2 == 2020) {
-                std::cout << "Number 1: " << *it1 << ", Number 2: " << *it2 << std::endl;
-                result = *it1 * *it2;
-                break;
+            for (auto it3 = it2 + 1; it3 != data.end(); ++it3) {
+                if (*it1 + *it2 + *it3 == 2020) {
+                    std::cout << "Number 1: " << *it1 << ", Number 2: " << *it2 << ", Number 3: " << *it3 << std::endl;
+                    result = *it1 * *it2 * *it3;
+                    break;
+                }
             }
+
         }
         if (result != -1) {
             break;
