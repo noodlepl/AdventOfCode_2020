@@ -7,8 +7,7 @@ std::vector<int> readData() {
     std::ifstream fs("input", std::ios_base::in);
     std::vector<int> data;
     int x = 0;
-    while (fs.good()){
-        fs >> x;
+    while (fs >> x){
         data.push_back(x);
     }
     return data;
