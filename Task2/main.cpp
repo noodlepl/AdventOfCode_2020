@@ -5,7 +5,7 @@
 #include "Password.h"
 
 int countValidPasswords() {
-    std::ifstream fs("input", std::ios_base::in);
+    std::ifstream fs("input.txt", std::ios_base::in);
     std::string line;
     std::vector<int> data;
     int count = 0;

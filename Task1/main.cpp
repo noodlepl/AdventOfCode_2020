@@ -4,7 +4,7 @@
 #include <algorithm>
 
 std::vector<int> readData() {
-    std::ifstream fs("input", std::ios_base::in);
+    std::ifstream fs("input.txt", std::ios_base::in);
     std::vector<int> data;
     int x = 0;
     while (fs >> x){
