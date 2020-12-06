@@ -5,9 +5,19 @@
 #ifndef ADVENTOFCODE_2020_PASSWORD_H
 #define ADVENTOFCODE_2020_PASSWORD_H
 
+#import <string>
 
 class Password {
+public:
+    Password(std::string);
 
+    bool isValid();
+
+private:
+    int lower_bound_;
+    int upper_bound_;
+    char required_character_;
+    std::string password_;
 };
 
 

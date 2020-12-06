@@ -2,20 +2,23 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
+#include "Password.h"
 
-std::vector<int> readData() {
+int countValidPasswords() {
     std::ifstream fs("input", std::ios_base::in);
+    std::string line;
     std::vector<int> data;
+    int count = 0;
 
-    return data;
+    while(std::getline(fs, line)) {
+        Password pass(line);
+        if (pass.isValid()) ++count;
+    }
+
+    return count;
 }
 
 int main() {
-    std::vector<int> data = readData();
-
-    int result = -1;
-
-
-    std::cout << result;
+    std::cout << countValidPasswords();
     return 0;
 }
