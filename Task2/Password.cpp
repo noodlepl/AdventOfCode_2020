@@ -23,7 +23,8 @@ Password::Password(std::string input) {
 }
 
 bool Password::isValid() {
-    auto count = std::count(password_.begin(), password_.end(), required_character_);
+    auto char_at_lower = password_.at(lower_bound_ - 1);
+    auto char_at_upper = password_.at(upper_bound_ - 1);
 
-    return count >= lower_bound_ && count <= upper_bound_;
+    return char_at_lower != char_at_upper && (char_at_lower == required_character_ || char_at_upper == required_character_);
 }
