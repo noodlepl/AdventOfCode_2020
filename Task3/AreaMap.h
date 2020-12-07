@@ -12,27 +12,27 @@ template <class T>
 class AreaMap {
 public:
     class iterator {
-        const int x_step_ = 3;
-        const int y_step_ = 1;
-        int x_;
-        int y_;
+        int x_step_;
+        int y_step_;
+        long long int x_;
+        long long int y_;
         AreaMap<T>& container_;
     public:
-        iterator(AreaMap<T>& container, int x = 0, int y = 0) : container_(container), x_(x), y_(y) {
+        iterator(AreaMap<T>& container, int x_step, int y_step, int x = 0, int y = 0) : container_(container), x_step_(x_step), y_step_(y_step), x_(x), y_(y) {
             auto x_rem = x_ % x_step_;
             if (x_rem > 0) x_ += x_step_ - x_rem;
             auto y_rem = y_ % y_step_;
             if (y_rem > 0) y_ += y_step_ - y_rem;
-            std::cout << "x_: " << x_ << ", y_: " << y_ << "\n";
+            std::cout << "x_=" << x_ << ", y_=" << y_ << "\n";
         }
         iterator& operator++() {
             x_ += x_step_;
             y_ += y_step_;
-            y_ = std::min(y_, container_.rows_);
+            if (y_ >= container_.rows_) x_ = -1;
             return *this;
         }
         iterator operator++(int) {iterator retval = *this; ++(*this); return retval;}
-        bool operator==(iterator other) const {return y_ == other.y_ && x_%container_.columns_ == other.x_%container_.columns_;}
+        bool operator==(iterator other) const {return y_ == other.y_ && x_ == other.x_;}
         bool operator!=(iterator other) const {return !(*this == other);}
         long operator*() {return container_.fields_[y_*container_.columns_ + x_ % container_.columns_];}
         // iterator traits
@@ -62,9 +62,9 @@ public:
         return fields_[y*columns_ + x % columns_];
     }
 
-    iterator begin() {return iterator(*this);}
-    iterator end() {
-        return iterator(*this, columns_, rows_);
+    iterator begin(int x_step = 3, int y_step = 1) {return iterator(*this, x_step, y_step);}
+    iterator end(int x_step = 3, int y_step = 1) {
+        return iterator(*this, x_step, y_step, -1, rows_);
     }
 
 private:
