@@ -113,9 +113,8 @@ Passport::Passport(std::string passport_string) {
 }
 
 bool Passport::isValid() {
-    bool result = false;
     if (auto it = fields_.find("byr"); it != fields_.end()) {
-        result = validateByr(it->second);
+        bool result = validateByr(it->second);
         it = fields_.find("iyr");
         if (result && it != fields_.end()) {
             result = validateIyr(it->second);
@@ -135,10 +134,9 @@ bool Passport::isValid() {
                             if (result && it != fields_.end()) {
                                 result = validatePid(it->second);
                                 std::cout << "Valid passport:";
-                                std::for_each(fields_.begin(), fields_.end(), [this](auto element){std::cout << " " << element.first << ":" << element.second << ",";});
+                                std::for_each(fields_.begin(), fields_.end(), [](auto element){std::cout << " " << element.first << ":" << element.second << ",";});
                                 std::cout << "\n";
-                            } else {
-                                result = false;
+                                return result;
                             }
                         }
                     }
@@ -147,5 +145,5 @@ bool Passport::isValid() {
         }
     }
 
-    return result;
+    return false;
 }
