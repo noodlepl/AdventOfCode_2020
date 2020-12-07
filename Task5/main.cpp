@@ -64,11 +64,16 @@ std::pair<int, int> getRowAndColumn(const std::string& seat_code) {
 void readData() {
     std::ifstream ifs("input.txt", std::ios_base::in);
     std::string line;
+    long max_seat_id = 0;
 
     while(std::getline(ifs, line)) {
         auto [row, column] = getRowAndColumn(line);
-        std::cout << line << " = [" << row << ", " << column << "]\n";
+        long seat_id = row * 8 + column;
+        std::cout << line << " = [" << row << ", " << column << "], ID = " << seat_id << "\n";
+        max_seat_id = std::max(seat_id, max_seat_id);
     }
+
+    std::cout << "Max Seat ID: " << max_seat_id << "\n";
 }
 
 int main() {
