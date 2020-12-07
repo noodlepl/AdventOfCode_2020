@@ -116,13 +116,31 @@ bool Passport::isValid() {
     bool result = false;
     if (auto it = fields_.find("byr"); it != fields_.end()) {
         result = validateByr(it->second);
+        it = fields_.find("iyr");
+        if (result && it != fields_.end()) {
+            result = validateIyr(it->second);
+            it = fields_.find("eyr");
+            if (result && it != fields_.end()) {
+                result = validateEyr(it->second);
+                it = fields_.find("hgt");
+                if (result && it != fields_.end()) {
+                    result = validateHgt(it->second);
+                    it = fields_.find("hcl");
+                    if (result && it != fields_.end()) {
+                        result = validateHcl(it->second);
+                        it = fields_.find("ecl");
+                        if (result && it != fields_.end()) {
+                            result = validateEcl(it->second);
+                            it = fields_.find("pid");
+                            if (result && it != fields_.end()) {
+                                result = validatePid(it->second);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
-    if (fields_.find("iyr") == fields_.end()) result = false;
-    if (fields_.find("eyr") == fields_.end()) result = false;
-    if (fields_.find("hgt") == fields_.end()) result = false;
-    if (fields_.find("hcl") == fields_.end()) result = false;
-    if (fields_.find("ecl") == fields_.end()) result = false;
-    if (fields_.find("pid") == fields_.end()) result = false;
 
     return result;
 }
