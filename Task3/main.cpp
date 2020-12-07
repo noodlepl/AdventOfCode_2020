@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <chrono>
+#include <math.h>
 
 #include "AreaMap.h"
 
