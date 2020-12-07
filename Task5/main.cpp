@@ -65,15 +65,28 @@ void readData() {
     std::ifstream ifs("input.txt", std::ios_base::in);
     std::string line;
     long max_seat_id = 0;
+    std::vector<long> seat_ids;
 
     while(std::getline(ifs, line)) {
         auto [row, column] = getRowAndColumn(line);
         long seat_id = row * 8 + column;
-        std::cout << line << " = [" << row << ", " << column << "], ID = " << seat_id << "\n";
+        seat_ids.push_back(seat_id);
+//        std::cout << line << " = [" << row << ", " << column << "], ID = " << seat_id << "\n";
         max_seat_id = std::max(seat_id, max_seat_id);
     }
-
     std::cout << "Max Seat ID: " << max_seat_id << "\n";
+
+    std::sort(seat_ids.begin(), seat_ids.end());
+    long my_seat_id = -1;
+    auto it = seat_ids.begin();
+    for (auto next = it+1; next != seat_ids.end(); ++it, ++next) {
+        if (*next - *it == 2) {
+            my_seat_id = *it + 1;
+            break;
+        }
+    }
+    std::for_each(seat_ids.begin(), seat_ids.end(), [](long seat_id){std::cout << seat_id << "\n";});
+    std::cout << "my seat ID: " << my_seat_id << "\n";
 }
 
 int main() {
