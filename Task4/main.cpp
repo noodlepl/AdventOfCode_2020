@@ -21,16 +21,23 @@ std::string readDataAsString() {
 int countValidPassports(std::string input) {
     std::string delimiter = "\n\n";
 
-    auto pos = 0;
     auto count = 0;
-    while ((pos = input.find(delimiter)) != std::string::npos) {
+    auto count_valid = 0;
+
+    for (auto pos = input.find(delimiter); pos != std::string::npos; pos = input.find(delimiter)) {
         auto passport_input = input.substr(0, pos);
         Passport passport(std::move(passport_input));
-        if (passport.isValid()) ++count;
+        if (passport.isValid()) ++count_valid;
         input.erase(0, pos + delimiter.size());
+        ++count;
     }
+    // parse the last input
+    Passport passport(std::move(input));
+    if (passport.isValid()) ++count_valid;
+    ++count;
 
-    return count;
+    std::cout << "Processed passports " << count << std::endl;
+    return count_valid;
 }
 
 int main() {
