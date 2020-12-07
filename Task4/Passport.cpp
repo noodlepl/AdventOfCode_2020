@@ -75,7 +75,7 @@ namespace {
     }
 
     bool validateHcl(const std::string& value) {
-        const std::regex color_regex("^#[0-9a-fA-F]{6}$");
+        const std::regex color_regex("^#[0-9a-f]{6}$");
         return std::regex_match(value, color_regex);
     }
 
@@ -86,7 +86,7 @@ namespace {
     }
 
     bool validatePid(const std::string& value) {
-        const std::regex number_regex("^[0-9]{9}");
+        const std::regex number_regex("^[0-9]{9}$");
         return std::regex_match(value, number_regex);
     }
 
@@ -134,6 +134,11 @@ bool Passport::isValid() {
                             it = fields_.find("pid");
                             if (result && it != fields_.end()) {
                                 result = validatePid(it->second);
+                                std::cout << "Valid passport:";
+                                std::for_each(fields_.begin(), fields_.end(), [this](auto element){std::cout << " " << element.first << ":" << element.second << ",";});
+                                std::cout << "\n";
+                            } else {
+                                result = false;
                             }
                         }
                     }
