@@ -23,18 +23,18 @@ namespace {
         return instructions;
     }
 
-    std::optional<std::string> canFitBag(const std::string &instruction, const std::string &bag_type) {
+    std::optional<std::string> canFitBag(const std::string &instruction, const std::string &bag_color) {
         auto bags_contain_pos = instruction.find(kBagsContain);
         if (bags_contain_pos == std::string::npos)
             throw std::invalid_argument("instruction is not valid");
 
-        auto bag_type_pos = instruction.find(bag_type, bags_contain_pos + kBagsContain.size());
-        if (bag_type_pos == std::string::npos)
+        auto bag_color_pos = instruction.find(bag_color, bags_contain_pos + kBagsContain.size());
+        if (bag_color_pos == std::string::npos)
             return std::nullopt;
 
-        auto container_bag_type = instruction.substr(0, bags_contain_pos - 1);
+        auto container_bag_color = instruction.substr(0, bags_contain_pos - 1);
 
-        return container_bag_type;
+        return container_bag_color;
     }
 }
 int main() {
@@ -43,26 +43,25 @@ int main() {
     auto instructions = readData();
     std::for_each(instructions.begin(), instructions.end(), [](auto instruction){std::cout << instruction << "\n";});
 
-    int single_run_bags_count = 0;
-    int total_valid_bags_count = 0;
-    std::deque<std::string> valid_types = {"shiny gold"};
-    std::set<std::string> checked_types;
+    std::deque<std::string> colors_to_check = {"shiny gold"};
+    std::set<std::string> valid_colors;
+    std::set<std::string> checked_colors;
 
     do {
-        single_run_bags_count = std::count_if(instructions.begin(), instructions.end(), [&valid_types, &checked_types](auto instruction){
-            auto bag_type = valid_types.front();
-            valid_types.pop_front();
-            auto new_bag_type = canFitBag(instruction, bag_type);
-            if (new_bag_type && std::find(checked_types.begin(), checked_types.end(), *new_bag_type) == checked_types.end()) {
-
-                valid_types.push_back(*new_bag_type);
+        std::count_if(instructions.begin(), instructions.end(), [&colors_to_check, &checked_colors, &valid_colors](auto instruction){
+            auto bag_color = colors_to_check.front();
+            auto new_bag_color = canFitBag(instruction, bag_color);
+            if (new_bag_color && std::find(checked_colors.begin(), checked_colors.end(), *new_bag_color) == checked_colors.end()) {
+                colors_to_check.push_back(*new_bag_color);
+                valid_colors.insert(*new_bag_color);
             }
-            checked_types.insert(bag_type);
-            return new_bag_type != std::nullopt;
+            checked_colors.insert(bag_color);
+            return new_bag_color != std::nullopt;
         });
+        colors_to_check.pop_front();
+    } while (!colors_to_check.empty());
 
-        total_valid_bags_count += single_run_bags_count;
-    } while (single_run_bags_count > 0);
+    std::cout << "Number of colors that can contain shiny gold bag: " << valid_colors.size() << std::endl;
 
     auto end = std::chrono::system_clock::now();
     std::chrono::microseconds diff = end - start;
