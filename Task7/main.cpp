@@ -55,9 +55,9 @@ int main() {
                 colors_to_check.push_back(*new_bag_color);
                 valid_colors.insert(*new_bag_color);
             }
-            checked_colors.insert(bag_color);
             return new_bag_color != std::nullopt;
         });
+        checked_colors.insert(colors_to_check.front());
         colors_to_check.pop_front();
     } while (!colors_to_check.empty());
 
