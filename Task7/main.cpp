@@ -51,13 +51,13 @@ namespace {
             throw std::invalid_argument("instruction is not valid");
 
         auto key = instruction.substr(0, bags_contain_pos - 1);
-        std::cout << "key: " << key << "\n";
+//        std::cout << "key: " << key << "\n";
 
         std::regex r("([0-9]+) ([a-z]+ [a-z]+) bag[s]?");
         std::smatch match_results;
         auto instruction_details = instruction.substr(bags_contain_pos + kBagsContain.size() + 1);
         std::vector<InstructionDetail> value;
-        std::cout << "Detailed instr: " << instruction_details << "\n";
+//        std::cout << "Detailed instr: " << instruction_details << "\n";
 
         while(std::regex_search(instruction_details, match_results, r)) {
             assert(match_results.size() == 3);
@@ -100,13 +100,6 @@ int main() {
     long long int num_bags_in_shiny_gold = countBagsInside(instructions, "shiny gold") - 1;
     std::cout << "Bags in shiny gold: " << num_bags_in_shiny_gold << std::endl;
 
-//    for (auto&& [key, value]: instructions) {
-//        std::cout << "[" << key << ":(\n";
-//        for(auto&& detail : value) {
-//            std::cout << "\t{" << detail.number << ", " << detail.bag_color << "}\n";
-//        }
-//        std::cout << ")]\n";
-//    }
 
 // Part 1
 //    auto instructions = readDataAsVector();
