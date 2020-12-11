@@ -49,7 +49,7 @@ int main() {
                 }
             }
         }
-        std::cout << next_matrix << "\n";
+//        std::cout << next_matrix << "\n";
     } while (next_matrix != original_matrix);
 
     auto occupied_seats = std::count(original_matrix.begin(), original_matrix.end(), '#');
