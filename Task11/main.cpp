@@ -19,9 +19,42 @@ int main() {
 
     auto next_matrix = readData();
     auto original_matrix = next_matrix;
-    std::cout << next_matrix << "\n";
+//    std::cout << next_matrix << "\n";
 
-    do {
+    // Part 1
+//    do {
+//        original_matrix = next_matrix;
+//        auto original_it = original_matrix.begin();
+//        auto next_it = next_matrix.begin();
+//        for(; original_it != original_matrix.end(); ++original_it, ++next_it) {
+//            switch(*original_it) {
+//                case '.':
+//                    break;
+//                case 'L':
+//                {
+//                    auto surrounding = original_matrix.getSurrounding(original_it);
+//                    auto occupied_it = std::find(surrounding.begin(), surrounding.end(), '#');
+//                    if (occupied_it == surrounding.end()) {
+//                        *next_it = '#';
+//                    }
+//                    break;
+//                }
+//                case '#':
+//                {
+//                    auto surrounding = original_matrix.getSurrounding(original_it);
+//                    auto occupied_count = std::count(surrounding.begin(), surrounding.end(), '#');
+//                    if (occupied_count >= 4) {
+//                        *next_it = 'L';
+//                    }
+//                    break;
+//                }
+//            }
+//        }
+//        std::cout << next_matrix << "\n";
+//    } while (next_matrix != original_matrix);
+
+// Part 2
+        do {
         original_matrix = next_matrix;
         auto original_it = original_matrix.begin();
         auto next_it = next_matrix.begin();
@@ -31,7 +64,7 @@ int main() {
                     break;
                 case 'L':
                 {
-                    auto surrounding = original_matrix.getSurrounding(original_it);
+                    auto surrounding = original_matrix.getVisibleSurrounding(original_it, '.');
                     auto occupied_it = std::find(surrounding.begin(), surrounding.end(), '#');
                     if (occupied_it == surrounding.end()) {
                         *next_it = '#';
@@ -40,9 +73,9 @@ int main() {
                 }
                 case '#':
                 {
-                    auto surrounding = original_matrix.getSurrounding(original_it);
+                    auto surrounding = original_matrix.getVisibleSurrounding(original_it, '.');
                     auto occupied_count = std::count(surrounding.begin(), surrounding.end(), '#');
-                    if (occupied_count >= 4) {
+                    if (occupied_count >= 5) {
                         *next_it = 'L';
                     }
                     break;
