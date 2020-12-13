@@ -5,7 +5,8 @@
 #include <chrono>
 #include <sstream>
 #include <cstdint>
-#include "PositionPart1.h"
+//#include "PositionPart1.h"
+#include "PositionPart2.h"
 
 int calculateDistance() {
     Position position;
@@ -15,8 +16,11 @@ int calculateDistance() {
         position.move(instruction);
     }
 
-    auto [x, y, direction] = position.getValues();
-    std::cout << "x: " << x << ", y: " << y << ", direction: " << direction << "\n";
+//    auto [x, y, direction] = position.getValues();
+//    std::cout << "x: " << x << ", y: " << y << ", direction: " << direction << "\n";
+
+    auto [x, y, waypoint_x, waypoint_y] = position.getValues();
+    std::cout << "x: " << x << ", y: " << y << ", waypoint_x: " << waypoint_x << ", waypoint_y: " << waypoint_y << "\n";
 
     return position.getManhattanDistance();
 }
