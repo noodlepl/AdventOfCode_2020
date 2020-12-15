@@ -9,11 +9,12 @@
 #include <map>
 #include <regex>
 #include <array>
+#include <unordered_map>
 
 int main() {
     auto start = std::chrono::system_clock::now();
 
-    std::array<int, 6> input = {2,0,6,12,1,3};
+    std::array<int, 6> input = {0,3,6};
     std::vector<int> game(input.begin(), input.end());
     const int limit = 2020;
     for (int i = input.size(); i < limit; ++i) {
@@ -29,6 +30,11 @@ int main() {
     }
 
     std::cout << "Result: " << game.back() << "\n";
+
+    std::vector<int> long_game(input.begin(), input.end());
+    std::unordered_map<int64_t, int64_t> last_positions;
+    int64_t new_limit = 30000000;
+    for (int)
 
     auto end = std::chrono::system_clock::now();
     std::chrono::microseconds diff = end - start;
