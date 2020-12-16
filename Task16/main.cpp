@@ -44,7 +44,6 @@ void readData() {
     std::string line;
     int state = 0;
     while(std::getline(ifs, line)) {
-        std::cout << line << "\n";
         if (line.empty()) continue;
         else if(line == "your ticket:") {
             state = 1;
@@ -97,9 +96,27 @@ int main() {
         std::cout << "[" << elem.first << "," << elem.second << "] ";
     }
     std::cout << std::endl;
+ //Part 1
+//    int64_t sum = 0;
+//    for (auto&& ticket : g_other_tickets) {
+//        for (auto&& val : ticket) {
+//            bool valid = false;
+//            for (auto&& range : merged_rules) {
+//                if (val >= range.first && val <= range.second) {
+//                    valid = true;
+//                    break;
+//                }
+//            }
+//            if (!valid)
+//                sum += val;
+//        }
+//    }
+//
+//    std::cout << "Result: " << sum << "\n";
 
-    int64_t sum = 0;
-    for (auto&& ticket : g_other_tickets) {
+    // Part 2
+    auto erase_it = std::remove_if(g_other_tickets.begin(), g_other_tickets.end(), [&merged_rules](auto&& ticket){
+        bool result = true;
         for (auto&& val : ticket) {
             bool valid = false;
             for (auto&& range : merged_rules) {
@@ -108,13 +125,57 @@ int main() {
                     break;
                 }
             }
-            if (!valid)
-                sum += val;
+            if (!valid) {
+                result = false;
+                break;
+            }
+        }
+        return !result;
+    });
+    std::cout << "Total size: " << g_other_tickets.size() << "\n";
+    g_other_tickets.erase(erase_it, g_other_tickets.end());
+    std::cout << "only valids size: " << g_other_tickets.size() << "\n";
+    g_other_tickets.push_back(g_my_ticket);
+    std::map<int, std::string> translation;
+
+    while (g_rules.size() > 0) {
+        for (int pos = 0; pos < g_my_ticket.size(); ++pos) {
+            if (translation.find(pos) != translation.end()) continue;
+            auto map_copy(g_rules);
+            for (auto&& ticket : g_other_tickets) {
+                auto value_to_check = ticket[pos];
+                for (auto map_it = map_copy.begin(); map_it != map_copy.end();) {
+                    auto& range1 = map_it->second.first;
+                    auto& range2 = map_it->second.second;
+                    bool is_in_range1 = value_to_check >= range1.first && value_to_check <= range1.second;
+                    if (!is_in_range1) {
+                        bool is_in_range2 = value_to_check >= range2.first && value_to_check <= range2.second;
+                        if (!is_in_range2) {
+                            map_it = map_copy.erase(map_it);
+                            continue;
+                        }
+                    }
+                    ++map_it;
+                }
+                if (map_copy.size() == 1) {
+                    auto elem = *map_copy.begin();
+                    translation[pos] = elem.first;
+                    g_rules.erase(elem.first);
+                }
+            }
         }
     }
 
-    std::cout << "Result: " << sum << "\n";
+    int64_t result = 1;
+    for (auto&& elem : translation) {
+        std::cout << elem.first << ": " << elem.second << "\n";
+        if (elem.second.find("departure") != std::string::npos) {
+            std::cout << elem.second << ": " << g_my_ticket[elem.first] << "\n";
+            result *= g_my_ticket[elem.first];
+        }
+    }
 
+    std::cout << "Result: " << result << "\n";
     auto end = std::chrono::system_clock::now();
     std::chrono::microseconds diff = end - start;
     std::cout << "Program duration: " << diff.count() << " microseconds" << std::endl;
