@@ -9,9 +9,9 @@
 #include <map>
 #include <regex>
 #include <array>
-#include <unordered_map>
+#include <list>
 
-using Rules = std::unordered_map<std::string, std::pair<std::pair<int, int>, std::pair<int, int>>>;
+using Rules = std::map<std::string, std::pair<std::pair<int, int>, std::pair<int, int>>>;
 using Ticket = std::vector<int>;
 Rules g_rules;
 Ticket g_my_ticket;
@@ -74,6 +74,46 @@ int main() {
     auto start = std::chrono::system_clock::now();
 
     readData();
+
+    //merge rules;
+    std::list<std::pair<int, int>> merged_rules;
+    std::for_each(g_rules.begin(), g_rules.end(), [&merged_rules](const auto& rule) {
+        merged_rules.push_back(rule.second.first);
+        merged_rules.push_back(rule.second.second);
+    });
+    merged_rules.sort([](const auto& a, const auto& b){
+        return a.first < b.first;
+    });
+    for (auto it = std::next(merged_rules.begin()); it != merged_rules.end();) {
+        auto prev = std::prev(it);
+        if (it->first <= prev->second + 1) {
+            prev->second = it->second;
+            it = merged_rules.erase(it);
+        } else
+            ++it;
+    }
+
+    for (auto&& elem : merged_rules){
+        std::cout << "[" << elem.first << "," << elem.second << "] ";
+    }
+    std::cout << std::endl;
+
+    int64_t sum = 0;
+    for (auto&& ticket : g_other_tickets) {
+        for (auto&& val : ticket) {
+            bool valid = false;
+            for (auto&& range : merged_rules) {
+                if (val >= range.first && val <= range.second) {
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid)
+                sum += val;
+        }
+    }
+
+    std::cout << "Result: " << sum << "\n";
 
     auto end = std::chrono::system_clock::now();
     std::chrono::microseconds diff = end - start;
