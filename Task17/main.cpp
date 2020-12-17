@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <deque>
 #include <algorithm>
 #include <numeric>
 #include <chrono>
@@ -12,51 +13,74 @@
 #include <list>
 #include <math.h>
 
-class Cubes {
-    std::vector<char> cubes_;
-    int planes_count_ = 5;
-    int plane_dimmension_;
+class Plane {
+    int dimension_;
+    std::deque<std::deque<char>> elements_;
 
-    int dimSquared() const {
-        return plane_dimmension_*plane_dimmension_;
+public:
+    Plane(int dimension) : dimension_(dimension){
+        elements_ = std::deque<std::deque<char>>(dimension, std::deque<char>(dimension, '.'));
     }
 
-    void resize() {
-
+    Plane(std::vector<char> input) {
+        const auto input_size = input.size();
+        dimension_ = sqrt(input_size);
+        for (auto i = 0; i < dimension_; ++i) {
+            std::deque<char> row;
+            for (auto j = 0; j < dimension_; ++j) {
+                row.push_back(input[i * dimension_ + j]);
+            }
+            elements_.push_back(row);
+        }
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Cubes& cubes) {
-        for (int i = 0; i < cubes.cubes_.size(); ++i) {
-            if (i % (cubes.plane_dimmension_) == 0)
-                os << "\n";
-            if (i % (cubes.dimSquared()) == 0)
-                os << "\n";
-            os << cubes.cubes_[i];
+    char get(int x, int y) {
+        int shift = elements_.size() / 2;
+        assert(x >= -shift && x <= shift);
+        assert(y >= -shift && y <= shift);
+
+        return elements_[y + shift][x+shift];
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Plane& plane) {
+        for (auto&& row : plane.elements_) {
+            for(auto elem : row) {
+                os << elem;
+            }
+            os << "\n";
+        }
+        return os;
+    }
+};
+
+class Cube {
+    std::deque<Plane> planes_;
+
+    friend std::ostream& operator<<(std::ostream& os, const Cube& cubes) {
+        for (auto&& plane : cubes.planes_) {
+            os << plane << "\n";
         }
         return os;
     }
 
 public:
-    Cubes(std::vector<char> input) {
-        auto input_size = input.size();
-        plane_dimmension_ = sqrt(input_size);
-        cubes_ = std::vector<char>(plane_dimmension_*plane_dimmension_*planes_count_, '.');
-        std::copy(input.begin(), input.end(), cubes_.begin() + 2*plane_dimmension_*plane_dimmension_);
+    Cube(std::vector<char> input) {
+        int dimension = sqrt(input.size());
+        planes_.emplace_back(dimension);
+        planes_.emplace_back(dimension);
+        planes_.emplace_back(std::move(input));
+        planes_.emplace_back(dimension);
+        planes_.emplace_back(dimension);
     }
 
     char get(int x, int y, int z) {
-        const auto planes_shift = planes_count_ / 2;
-        const auto single_plane_shift = plane_dimmension_ / 2;
-        assert(x >= -single_plane_shift && x <= single_plane_shift);
-        assert(y >= -single_plane_shift && y <= single_plane_shift);
-        assert(z >= -planes_shift && z <= planes_shift);
-
-        const auto pos = (z + planes_shift) * dimSquared() + (y + single_plane_shift) * plane_dimmension_ + (x + single_plane_shift);
-        return cubes_[pos];
+        const int shift = planes_.size() / 2;
+        assert(z >= -shift && z <= shift);
+        return planes_[z + shift].get(x, y);
     }
 };
 
-Cubes readData() {
+Cube readData() {
     std::ifstream ifs("input.txt");
     std::string line;
     std::vector<char> cubes_input;
@@ -65,7 +89,7 @@ Cubes readData() {
             cubes_input.push_back(c);
     }
 
-    return Cubes(cubes_input);
+    return Cube(cubes_input);
 }
 
 
