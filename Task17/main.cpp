@@ -12,197 +12,129 @@
 #include <array>
 #include <list>
 #include <cmath>
+#include <unordered_set>
 
-class Plane {
-    int dimension_;
-    std::deque<std::deque<char>> elements_;
-
-public:
-    Plane(int dimension) : dimension_(dimension){
-        elements_ = std::deque<std::deque<char>>(dimension, std::deque<char>(dimension, '.'));
-    }
-
-    Plane(std::vector<char> input) {
-        const auto input_size = input.size();
-        dimension_ = sqrt(input_size);
-        for (auto i = 0; i < dimension_; ++i) {
-            std::deque<char> row;
-            for (auto j = 0; j < dimension_; ++j) {
-                row.push_back(input[i * dimension_ + j]);
-            }
-            elements_.push_back(row);
-        }
-    }
-
-    char get(int x, int y) {
-        int shift = elements_.size() / 2;
-        assert(x >= -shift && x <= shift);
-        assert(y >= -shift && y <= shift);
-
-        return elements_[y + shift][x+shift];
-    }
-
-    void set(int x, int y, char value) {
-        int shift = elements_.size() / 2;
-        assert(x >= -shift && x <= shift);
-        assert(y >= -shift && y <= shift);
-
-        elements_[y+shift][x+shift] = value;
-    }
-
-    int getActiveCount(int x, int y) {
-        int count = 0;
-        for (int row = y - 1; row <= y + 1; ++row) {
-            for (int col = x - 1; col <= x+1; ++col) {
-                if (get(col, row) == '#') ++count;
-            }
-        }
-        return count;
-    }
-
-    int getActiveExlusiveCount(int x, int y) {
-        int count = 0;
-        for (int row = y - 1; row <= y + 1; ++row) {
-            for (int col = x - 1; col <= x+1; ++col) {
-                if (row == y && col == x) continue;
-                if (get(col, row) == '#') ++count;
-            }
-        }
-        return count;
-    }
-
-    void grow() {
-        for (auto&& row : elements_) {
-            row.push_front('.');
-            row.push_front('.');
-            row.push_back('.');
-            row.push_back('.');
-        }
-        dimension_ += 4;
-        std::deque<char> empty_row(dimension_, '.');
-        elements_.push_front(empty_row);
-        elements_.push_front(empty_row);
-        elements_.push_back(empty_row);
-        elements_.push_back(empty_row);
-    }
-
-    int dimension() const {return dimension_;}
-
-    int countActive() {
-        int count = 0;
-        for(auto&& row : elements_) {
-            for (auto&& elem : row) {
-                if (elem == '#') ++count;
-            }
-        }
-        return count;
-    }
-
-    friend std::ostream& operator<<(std::ostream& os, const Plane& plane) {
-        os << "Plane size " << plane.dimension_ << " size of elements: " << plane.elements_.size() << "\n";
-        for (auto&& row : plane.elements_) {
-            for(auto elem : row) {
-                os << elem;
-            }
-            os << "\n";
-        }
-        return os;
+struct Coordinate {
+    int x;
+    int y;
+    int z;
+    friend bool operator==(const Coordinate& lhs, const Coordinate& rhs) {
+        return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
     }
 };
 
-class Cube {
-    std::deque<Plane> planes_;
-
-    friend std::ostream& operator<<(std::ostream& os, const Cube& cubes) {
-        for (auto&& plane : cubes.planes_) {
-            os << plane << "\n";
-        }
-        return os;
-    }
-
-public:
-    Cube(std::vector<char> input) {
-        int dimension = sqrt(input.size());
-        planes_.emplace_back(dimension);
-        planes_.emplace_back(std::move(input));
-        planes_.emplace_back(dimension);
-    }
-
-    char get(int x, int y, int z) {
-        const int shift = planes_.size() / 2;
-        assert(z >= -shift && z <= shift);
-        return planes_[z + shift].get(x, y);
-    }
-
-    void grow() {
-        for (auto&& plane : planes_) {
-            plane.grow();
-        }
-        auto dimension = planes_[0].dimension();
-
-        planes_.emplace_back(dimension);
-        planes_.emplace_front(dimension);
-    }
-
-    void runCycle() {
-        Cube next_cube(*this);
-        for (auto z = 1; z < planes_.size() - 1; ++z) {
-            const auto dimension = planes_[z].dimension();
-            const auto boundary = dimension/2 - 1;
-            for (int row = -boundary; row <= boundary; ++row) {
-                for(int col = -boundary; col <= boundary; ++col) {
-                    auto area_0 = planes_[z].getActiveExlusiveCount(col, row);
-                    auto area_minus_1 = planes_[z-1].getActiveCount(col, row);
-                    auto area_plus_1 = planes_[z+1].getActiveCount(col, row);
-                    auto total_active = area_0 + area_minus_1 + area_plus_1;
-
-                    if(planes_[z].get(col, row) == '#') {
-                        if (total_active != 2 && total_active != 3)
-                            next_cube.planes_[z].set(col, row, '.');
-                    } else if (total_active == 3) {
-                        next_cube.planes_[z].set(col, row, '#');
-                    }
-                }
-            }
-        }
-        std::swap(*this, next_cube);
-        grow();
-    }
-
-    int countActive() {
-        int count = 0;
-        for(auto&& plane : planes_) {
-            count += plane.countActive();
-        }
-        return count;
+struct CoordHash
+{
+    std::size_t operator()(Coordinate const& coordinate) const noexcept
+    {
+        std::size_t h1 = std::hash<int>{}(coordinate.x);
+        std::size_t h2 = std::hash<int>{}(coordinate.y);
+        std::size_t h3 = std::hash<int>{}(coordinate.z);
+        return h1 ^ (h2 << 1) ^ (h3 << 2);
     }
 };
 
-Cube readData() {
+using Cubes = std::unordered_set<Coordinate, CoordHash>;
+
+std::pair<Cubes, int> readData() {
     std::ifstream ifs("input.txt");
     std::string line;
-    std::vector<char> cubes_input;
+    Cubes active_cubes;
+    std::vector<char> input;
+    int dimension = 0;
     while (std::getline(ifs, line)) {
-        for (auto c : line)
-            cubes_input.push_back(c);
+        std::copy(line.begin(), line.end(), std::back_inserter(input));
+        ++dimension;
     }
 
-    return Cube(cubes_input);
+    auto it = input.begin();
+    auto start_value = -dimension/2;
+    auto end_value = start_value + dimension;
+
+    for (int row = start_value; row < end_value; ++row) {
+        for (int col =  start_value; col < end_value; ++col) {
+            if(*it == '#') {
+                auto [iterator, success] = active_cubes.insert(Coordinate{col, row, 0});
+                assert(success);
+            }
+            ++it;
+        }
+    }
+
+    return std::make_pair(active_cubes, dimension);
 }
 
+void printCubes(const Cubes& cubes, const Coordinate& start_coord) {
+    auto [start_x, start_y, start_z] = start_coord;
+    assert(start_x <= 0 && start_y <= 0 && start_z <= 0);
+    for (int plane = start_z; plane <= -start_z; ++plane) {
+        for (int row = start_y; row <= -start_y; ++row) {
+            for (int col = start_x; col <= -start_x; ++col) {
+                if (std::find(cubes.begin(), cubes.end(), Coordinate{col, row, plane}) != cubes.end()) {
+                    std::cout << '#';
+                } else {
+                    std::cout << '.';
+                }
+            }
+            std::cout << "\n";
+        }
+        std::cout << "\n";
+    }
+}
+
+bool activate(const Cubes& cubes, const Coordinate& coord) {
+    auto [col,row,plane] = coord;
+    auto active_count = 0;
+    for (auto x = col-1; x <= col+1; ++x){
+        for (auto y = row-1; y <= row+1; ++y){
+            for (auto z = plane-1; z <= plane+1; ++z){
+                if (x == col && y == row && z == plane) continue;
+                if (cubes.find(Coordinate{x, y, z}) != cubes.end())
+                    ++active_count;
+            }
+        }
+    }
+    bool is_active = cubes.find(coord) != cubes.end();
+    if (is_active && (active_count == 2 || active_count == 3))
+        return true;
+    if (!is_active && active_count == 3)
+        return true;
+
+    return false;
+}
+
+Cubes runCycle(Cubes current, const Coordinate& start_coord) {
+    Cubes next;
+    auto [start_x, start_y, start_z] = start_coord;
+    assert(start_x <= 0 && start_y <= 0 && start_z <= 0);
+
+    for (auto x = start_x; x <= -start_x; ++x) {
+        for (auto y = start_y; y <= -start_y; ++y) {
+            for (auto z = start_z; z <= -start_z; ++z) {
+                if (activate(current, Coordinate{x,y,z}))
+                    next.insert(Coordinate{x,y,z});
+            }
+        }
+    }
+
+    return next;
+}
 
 int main() {
     auto start = std::chrono::system_clock::now();
 
-    auto cubes = readData();
-    cubes.grow();
-    std::cout << cubes << "\n";
+    auto [cubes, dimension] = readData();
 
-    for (int i = 0; i < 6; ++i) {
-        cubes.runCycle();
+//    printCubes(cubes, Coordinate{-2, -2, -1});
+
+    Coordinate start_coord{-dimension/2, -dimension/2, 0};
+    for (int i = 0; i < 6; ++i){
+        start_coord = {--start_coord.x, --start_coord.y, --start_coord.z};
+        cubes = runCycle(cubes, start_coord);
     }
-//    std::cout << cubes << "\n";
-    std::cout << "Active cubes: " << cubes.countActive() << "\n";
+
+//    printCubes(cubes, Coordinate{-4, -4, -0});
+    std::cout << "Result: " << cubes.size() << "\n";
 
     auto end = std::chrono::system_clock::now();
     std::chrono::microseconds diff = end - start;
