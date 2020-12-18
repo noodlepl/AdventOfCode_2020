@@ -11,7 +11,7 @@
 #include <regex>
 #include <array>
 #include <list>
-#include <math.h>
+#include <cmath>
 
 class Plane {
     int dimension_;
@@ -42,7 +42,64 @@ public:
         return elements_[y + shift][x+shift];
     }
 
+    void set(int x, int y, char value) {
+        int shift = elements_.size() / 2;
+        assert(x >= -shift && x <= shift);
+        assert(y >= -shift && y <= shift);
+
+        elements_[y+shift][x+shift] = value;
+    }
+
+    int getActiveCount(int x, int y) {
+        int count = 0;
+        for (int row = y - 1; row <= y + 1; ++row) {
+            for (int col = x - 1; col <= x+1; ++col) {
+                if (get(col, row) == '#') ++count;
+            }
+        }
+        return count;
+    }
+
+    int getActiveExlusiveCount(int x, int y) {
+        int count = 0;
+        for (int row = y - 1; row <= y + 1; ++row) {
+            for (int col = x - 1; col <= x+1; ++col) {
+                if (row == y && col == x) continue;
+                if (get(col, row) == '#') ++count;
+            }
+        }
+        return count;
+    }
+
+    void grow() {
+        for (auto&& row : elements_) {
+            row.push_front('.');
+            row.push_front('.');
+            row.push_back('.');
+            row.push_back('.');
+        }
+        dimension_ += 4;
+        std::deque<char> empty_row(dimension_, '.');
+        elements_.push_front(empty_row);
+        elements_.push_front(empty_row);
+        elements_.push_back(empty_row);
+        elements_.push_back(empty_row);
+    }
+
+    int dimension() const {return dimension_;}
+
+    int countActive() {
+        int count = 0;
+        for(auto&& row : elements_) {
+            for (auto&& elem : row) {
+                if (elem == '#') ++count;
+            }
+        }
+        return count;
+    }
+
     friend std::ostream& operator<<(std::ostream& os, const Plane& plane) {
+        os << "Plane size " << plane.dimension_ << " size of elements: " << plane.elements_.size() << "\n";
         for (auto&& row : plane.elements_) {
             for(auto elem : row) {
                 os << elem;
@@ -67,9 +124,7 @@ public:
     Cube(std::vector<char> input) {
         int dimension = sqrt(input.size());
         planes_.emplace_back(dimension);
-        planes_.emplace_back(dimension);
         planes_.emplace_back(std::move(input));
-        planes_.emplace_back(dimension);
         planes_.emplace_back(dimension);
     }
 
@@ -77,6 +132,49 @@ public:
         const int shift = planes_.size() / 2;
         assert(z >= -shift && z <= shift);
         return planes_[z + shift].get(x, y);
+    }
+
+    void grow() {
+        for (auto&& plane : planes_) {
+            plane.grow();
+        }
+        auto dimension = planes_[0].dimension();
+
+        planes_.emplace_back(dimension);
+        planes_.emplace_front(dimension);
+    }
+
+    void runCycle() {
+        Cube next_cube(*this);
+        for (auto z = 1; z < planes_.size() - 1; ++z) {
+            const auto dimension = planes_[z].dimension();
+            const auto boundary = dimension/2 - 1;
+            for (int row = -boundary; row <= boundary; ++row) {
+                for(int col = -boundary; col <= boundary; ++col) {
+                    auto area_0 = planes_[z].getActiveExlusiveCount(col, row);
+                    auto area_minus_1 = planes_[z-1].getActiveCount(col, row);
+                    auto area_plus_1 = planes_[z+1].getActiveCount(col, row);
+                    auto total_active = area_0 + area_minus_1 + area_plus_1;
+
+                    if(planes_[z].get(col, row) == '#') {
+                        if (total_active != 2 && total_active != 3)
+                            next_cube.planes_[z].set(col, row, '.');
+                    } else if (total_active == 3) {
+                        next_cube.planes_[z].set(col, row, '#');
+                    }
+                }
+            }
+        }
+        std::swap(*this, next_cube);
+        grow();
+    }
+
+    int countActive() {
+        int count = 0;
+        for(auto&& plane : planes_) {
+            count += plane.countActive();
+        }
+        return count;
     }
 };
 
@@ -97,10 +195,14 @@ int main() {
     auto start = std::chrono::system_clock::now();
 
     auto cubes = readData();
+    cubes.grow();
     std::cout << cubes << "\n";
 
-    std::cout << "Test cubes: " << cubes.get(0,0,0) << "," << cubes.get(1, 0, 0) << "," << cubes.get(-1,-1,-1) << ","
-    << cubes.get(1,1,2);
+    for (int i = 0; i < 6; ++i) {
+        cubes.runCycle();
+    }
+//    std::cout << cubes << "\n";
+    std::cout << "Active cubes: " << cubes.countActive() << "\n";
 
     auto end = std::chrono::system_clock::now();
     std::chrono::microseconds diff = end - start;
