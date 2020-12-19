@@ -16,49 +16,14 @@
 std::unordered_map<int, std::string> g_rules;
 std::vector<std::string> g_messages;
 
-struct Node {
-    Node(int l) : level(l){}
-    int level;
-    std::unique_ptr<Node> a = nullptr;
-    std::unique_ptr<Node> b = nullptr;
-};
-
 void readRule(std::string line) {
     auto key_end = line.find(':');
     auto [it, success] = g_rules.insert({std::stoi(line.substr(0, key_end)), line.substr(key_end + 1)});
     assert(success);
 }
 
-std::string decodeRule(int, int depth = 0);
-
-std::string decodeRecursiveRule(int key) {
-    auto rule = g_rules[key];
-    auto pos = rule.find('|');
-    rule.erase(pos, std::string::npos);
-    std::ostringstream oss;
-    std::istringstream iss(rule);
-    int next_key;
-    while (iss >> next_key) {
-        oss << "(?:";
-        oss << decodeRule(next_key);
-        oss << ")+";
-    }
-    return oss.str();
-}
-
-std::string decode8() {
-    std::ostringstream oss;
-    oss << "(" << decodeRule(42) << "|" << "(?:" << decodeRule(42) << ")+" << ")";
-    return oss.str();
-}
-
-std::string decode11() {
-    std::ostringstream oss;
-    oss << "(" << decodeRule(42) << decodeRule(31) << "|" << decodeRule(42) << "(?:" << decodeRule(42) << ")+"<<"(?:"<<decodeRule(31)<<")+" << decodeRule(31) << ")";
-    return oss.str();
-}
-
-std::string decodeRule(int key, int depth) {
+std::string decodeRule(int key, int depth = 0) {
+    // awfully hackish
     if (depth >= 12) {
         std::cout << "depth hit for key " << key << "\n";
         return "";
@@ -115,6 +80,7 @@ int main() {
     oss << '^' << rule << '$';
     std::regex r(oss.str());
     std::cout << oss.str() << "\n";
+    std::cout << "regex is " << oss.str().size() << " char long\n";
     int count = 0;
     for (auto&& message : g_messages) {
         if (std::regex_match(message, r)) {
