@@ -29,7 +29,7 @@ void readRule(std::string line) {
     assert(success);
 }
 
-std::string decodeRule(int);
+std::string decodeRule(int, int depth = 0);
 
 std::string decodeRecursiveRule(int key) {
     auto rule = g_rules[key];
@@ -58,17 +58,17 @@ std::string decode11() {
     return oss.str();
 }
 
-std::string decodeRule(int key) {
+std::string decodeRule(int key, int depth) {
+    if (depth >= 12) {
+        std::cout << "depth hit for key " << key << "\n";
+        return "";
+    }
     auto rule = g_rules[key];
     std::regex single_char_regex("\"([ab])\"");
     std::smatch mresult;
     if (std::regex_search(rule, mresult, single_char_regex))
         return mresult[1];
 
-    if (key == 8)
-        return decode8();
-    if (key == 11)
-        return decode11();
     const auto delimiter = '|';
     std::istringstream iss(rule);
     std::string token;
@@ -79,7 +79,7 @@ std::string decodeRule(int key) {
         std::istringstream internal_iss(token);
         while(internal_iss >> next_key) {
             if (next_key == key) {
-//                decoded_rule << decodeRecursiveRule(next_key);
+                decoded_rule << decodeRule(next_key, ++depth);
             } else {
                 decoded_rule << decodeRule(next_key);
             }
