@@ -147,7 +147,7 @@ auto handleTopLeftCorner(std::list<Tile>& tiles, int64_t top_left_key) {
         return image.key == top_left_key;
     });
     bool found = false;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 4; ++i) {
         auto matches_right = std::find_if(tiles.begin(), tiles.end(), [detailed_top_left_it](auto&& image) {
            if (image.key == detailed_top_left_it->key)
                return false;
@@ -181,7 +181,7 @@ auto handleTopLeftCorner(std::list<Tile>& tiles, int64_t top_left_key) {
 }
 
 bool matchTile(Image& image, const std::vector<char>& reference_edge, int edge_to_fit) {
-    for (int rotation = 0; rotation < 3; ++rotation) {
+    for (int rotation = 0; rotation < 4; ++rotation) {
         auto left_edge = getEdge(image, edge_to_fit);
         if (reference_edge == left_edge)
             return true;
@@ -191,12 +191,14 @@ bool matchTile(Image& image, const std::vector<char>& reference_edge, int edge_t
         if (reference_edge == left_edge)
             return true;
 
+        flip(image);
         rotate(image);
     }
     return false;
 }
 
 void printTile(const Tile& tile) {
+//    return;
     std::cout << tile.key << ":\n";
     for (auto&& row : tile.image) {
         for (auto c : row)
@@ -204,6 +206,36 @@ void printTile(const Tile& tile) {
         std::cout << "\n";
     }
     std::cout << "\n";
+}
+
+template<typename Img>
+bool markMonsters(Img& image) {
+    bool changed = false;
+
+    std::array<std::pair<int, int>, 15> monster_ids = {{{1,0}, {2,1}, {2,4}, {1,5}, {1,6},
+                                                        {2,7}, {2,10},{1,11},{1,12},{2,13},
+                                                        {2,16}, {1,17}, {0,18}, {1,18},{1,19}}};
+
+    for (int row = 0; row < image.size() - 2; ++row) {
+        for (int col = 0; col < image.size() - 19; ++col) {
+            bool monster = true;
+            for (auto&& id : monster_ids) {
+                int peeked_row = row + id.first;
+                int peeked_col = col + id.second;
+                if (image[peeked_row][peeked_col] != '#') {
+                    monster = false;
+                    break;
+                }
+            }
+            if (monster) {
+                changed = true;
+                for (auto&& id : monster_ids) {
+                    image[row + id.first][col + id.second] = 'O';
+                }
+            }
+        }
+    }
+    return changed;
 }
 
 int main() {
@@ -272,9 +304,9 @@ int main() {
 
     std::cout << "Result: " << result << "\n";
 
-    using BigImage = std::vector<std::vector<Tile>>;
+    using TilesMatrix = std::vector<std::vector<Tile>>;
     int dimension = sqrt(images.size());
-    BigImage big(dimension, std::vector<Tile>(dimension, Tile()));
+    TilesMatrix tiles_mat(dimension, std::vector<Tile>(dimension, Tile()));
     std::list<Tile> tiles_list;
 
     for (auto&& kv : images) {
@@ -286,11 +318,11 @@ int main() {
 
     auto tl_tile = handleTopLeftCorner(tiles_list, corner_candidates.begin()->first);
 
-    big[0][0] = *tl_tile;
+    tiles_mat[0][0] = *tl_tile;
     tiles_list.erase(tl_tile);
 
-    printTile(big[0][0]);
-    for (auto row_it = big.begin(); row_it != big.end(); ++row_it) {
+    printTile(tiles_mat[0][0]);
+    for (auto row_it = tiles_mat.begin(); row_it != tiles_mat.end(); ++row_it) {
         if (row_it->begin()->key == -1) {
             auto on_top_it = std::prev(row_it)->begin();
             auto reference_edge = getEdge(on_top_it->image, 2);
@@ -317,12 +349,52 @@ int main() {
         }
     }
 
-    std::cout << "After rotation:\n";
-    for (auto&& row : big) {
-        for (auto&& col : row)
-            std::cout << col.key << " ";
+    result = tiles_mat[0][0].key * tiles_mat[0].back().key * tiles_mat.back()[0].key * tiles_mat.back().back().key;
+
+    using BigImage = std::vector<std::vector<char>>;
+    BigImage big_image(tiles_mat.size() * 8, std::vector<char>(tiles_mat[0].size() * 8));
+    for (int row = 0; row < tiles_mat.size(); row++) {
+        for (int col = 0; col < tiles_mat[0].size(); col++) {
+            for (int img_row = 1; img_row < 9; img_row++) {
+                auto& data = tiles_mat[row][col].image[img_row];
+                auto row_id = row*8+img_row;
+                std::copy(std::next(data.begin()), std::prev(data.end()), big_image[row_id - 1].begin() + col*8);
+            }
+        }
+    }
+
+    for (auto&& row : big_image) {
+        for (auto c : row)
+            std::cout << c;
         std::cout << "\n";
     }
+    std::cout << "\n";
+
+    int count = 0;
+    while(!markMonsters(big_image)) {
+        if (count++ % 2)
+            rotate(big_image);
+        else
+            flip(big_image);
+
+        for (auto&& row : big_image) {
+            for (auto c : row)
+                std::cout << c;
+            std::cout << "\n";
+        }
+        std::cout << "\n";
+        if (count >= 8) {
+            std::cout << "Failure!\n";
+            break;
+        }
+    }
+
+    int64_t remaining_water = std::accumulate(big_image.begin(), big_image.end(), 0LL, [](auto sum, auto&& row) {
+        int64_t count_row = std::count(row.begin(), row.end(), '#');
+        return sum + count_row;
+    });
+
+    std::cout << "Part 2 result: " << remaining_water << "\n";
 
     auto end = std::chrono::system_clock::now();
     std::chrono::microseconds diff = end - start;
