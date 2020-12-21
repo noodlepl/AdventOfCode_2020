@@ -372,21 +372,21 @@ int main() {
 
     int count = 0;
     while(!markMonsters(big_image)) {
-        if (count++ % 2)
-            rotate(big_image);
-        else
+        rotate(big_image);
+        if (count == 4)
             flip(big_image);
 
-        for (auto&& row : big_image) {
-            for (auto c : row)
-                std::cout << c;
-            std::cout << "\n";
-        }
-        std::cout << "\n";
+//        for (auto&& row : big_image) {
+//            for (auto c : row)
+//                std::cout << c;
+//            std::cout << "\n";
+//        }
+//        std::cout << "\n";
         if (count >= 8) {
             std::cout << "Failure!\n";
             break;
         }
+        count++;
     }
 
     int64_t remaining_water = std::accumulate(big_image.begin(), big_image.end(), 0LL, [](auto sum, auto&& row) {
@@ -394,6 +394,12 @@ int main() {
         return sum + count_row;
     });
 
+        for (auto&& row : big_image) {
+            for (auto c : row)
+                std::cout << c;
+            std::cout << "\n";
+        }
+        std::cout << "\n";
     std::cout << "Part 2 result: " << remaining_water << "\n";
 
     auto end = std::chrono::system_clock::now();
