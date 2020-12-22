@@ -39,11 +39,7 @@ void passCard(Deck& from, Deck& to) {
     from.pop_front();
 }
 
-int main() {
-    auto start = std::chrono::system_clock::now();
-
-    auto [deck1, deck2] = readData();
-
+std::pair<Deck, Deck> playGame(Deck deck1, Deck deck2) {
     int count = 0;
     do {
         auto top_card_1 = deck1.front();
@@ -56,10 +52,20 @@ int main() {
 
         std::cout << "Round " << count++ << "\n";
     } while(!deck1.empty() && !deck2.empty());
+    if (deck1.empty())
+        return {deck2, deck1};
+    return {deck1, deck2};
+}
 
-    auto& winning_deck = deck1.empty() ? deck2 : deck1;
+int main() {
+    auto start = std::chrono::system_clock::now();
+
+    auto [deck1, deck2] = readData();
+
+    auto [winner, looser] = playGame(std::move(deck1), std::move(deck2));
+
     int multiplier = 1;
-    int result = std::accumulate(winning_deck.rbegin(), winning_deck.rend(), 0, [&multiplier](auto sum, auto current) {
+    int result = std::accumulate(winner.rbegin(), winner.rend(), 0, [&multiplier](auto sum, auto current) {
         return sum + (multiplier++) * current;
     });
 
