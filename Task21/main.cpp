@@ -13,9 +13,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
-std::pair<std::vector<std::string>, std::vector<std::string>> parseLine(std::string line) {
+std::pair<std::vector<std::string>, std::list<std::string>> parseLine(std::string line) {
     std::vector<std::string> keys;
-    std::vector<std::string> ingredients;
+    std::list<std::string> ingredients;
     const std::string delimiter = "(contains ";
     auto pos = line.find(delimiter);
     auto ingredients_str = line.substr(0, pos);
@@ -37,7 +37,7 @@ std::pair<std::vector<std::string>, std::vector<std::string>> parseLine(std::str
 
 int main() {
     auto start = std::chrono::system_clock::now();
-    using AllergensProductsMap = std::map<std::string, std::vector<std::vector<std::string>>>;
+    using AllergensProductsMap = std::map<std::string, std::vector<std::list<std::string>>>;
     using CantContain = std::vector<std::string>;
     using CheckedIngredients = std::unordered_set<std::string>;
 
@@ -46,7 +46,7 @@ int main() {
 
     // read input
     AllergensProductsMap might_contain;
-    std::vector<std::vector<std::string>> all_products;
+    std::vector<std::list<std::string>> all_products;
     while (std::getline(ifs, line)) {
         auto [allergen_keys, ingredients] = parseLine(std::move(line));
 
@@ -91,6 +91,76 @@ int main() {
     });
 
     std::cout << "Part 1 result: " << result << "\n";
+
+    // Part 2
+    // Remove safe ingredients
+    std::map<std::string, std::unordered_set<std::string>> allergen_candidates;
+    for (auto&& allergen_products : might_contain) {
+        auto key = allergen_products.first;
+        auto& products = allergen_products.second;
+        for (auto&& product : products) {
+            for (auto it = product.begin(); it != product.end();) {
+                if (std::find(cant_contain_any.begin(), cant_contain_any.end(), *it) != cant_contain_any.end())
+                    it = product.erase(it);
+                else
+                    allergen_candidates[key].insert(*it++);
+            }
+        }
+    }
+    //print
+//    for (auto&& allergen_products : might_contain) {
+//        std::cout << allergen_products.first << ": ";
+//        for (auto&& product : allergen_products.second) {
+//            for (auto&& ingredient : product) {
+//                std::cout << ingredient << ", ";
+//            }
+//            std::cout << "\n";
+//        }
+//        std::cout << "\n";
+//    }
+
+    int count = 0;
+    while (std::any_of(allergen_candidates.begin(), allergen_candidates.end(), [](auto&& kv){return kv.second.size() != 1;})) {
+        for (auto&& kv : allergen_candidates) {
+            auto& products_with_candidate = might_contain[kv.first];
+            auto& candidates = kv.second;
+            if (candidates.size() == 1) {
+                for (auto&& inner_kv : allergen_candidates) {
+                    if (inner_kv.first == kv.first) continue;
+                    auto& other_candidates = inner_kv.second;
+                    other_candidates.erase(*candidates.begin());
+                }
+            }
+            for (auto it = candidates.begin(); it != candidates.end();) {
+                auto& candidate = *it;
+                if (std::any_of(products_with_candidate.begin(), products_with_candidate.end(), [candidate](auto&& product) {
+                    return std::find(product.begin(), product.end(), candidate) == product.end();
+                })) {
+                    it = candidates.erase(it);
+                    continue;
+                }
+                ++it;
+            }
+        }
+        std::cout << "iteration: " << count++ << "\n";
+    }
+
+    //print
+    for (auto&& kv : allergen_candidates) {
+        std::cout << kv.first << ": ";
+        for (auto&& candidate : kv.second)
+            std::cout << candidate << ", ";
+        std::cout << "\n";
+    }
+
+    std::ostringstream cdil;
+    for (auto&& kv : allergen_candidates) {
+        if (kv != *allergen_candidates.begin())
+            cdil << ",";
+        cdil << *kv.second.begin();
+    }
+
+    std::cout << "Part 2 canonical dangerous ingredient list: " << cdil.str() << "\n";
 
     auto end = std::chrono::system_clock::now();
     std::chrono::microseconds diff = end - start;
