@@ -10,12 +10,13 @@
 #include <regex>
 #include <array>
 #include <list>
+#include <set>
 
 bool is_number(const std::string &s) {
     return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
 }
 using Deck = std::deque<int>;
-std::pair<Deck, Deck> readData() {
+std::array<Deck, 2> readData() {
     Deck deck1;
     Deck deck2;
     auto* working_deck = &deck1;
@@ -39,33 +40,75 @@ void passCard(Deck& from, Deck& to) {
     from.pop_front();
 }
 
-std::pair<Deck, Deck> playGame(Deck deck1, Deck deck2) {
+void printCards(const Deck& deck) {
     int count = 0;
+    for (auto card : deck) {
+        if (count > 0)
+            std::cout << ",";
+        std::cout << card;
+        count++;
+    }
+    std::cout << "\n";
+}
+
+int playGame(std::array<Deck, 2>& decks) {
+    int count = 1;
+    static int game_count = 0;
+    ++game_count;
+    std::set<Deck> ref_decks0;
+    ref_decks0.insert(decks[0]);
+    std::set<Deck> ref_decks1;
+    ref_decks1.insert(decks[1]);
+
+    int winner;
     do {
-        auto top_card_1 = deck1.front();
-        auto top_card_2 = deck2.front();
+        std::cout << "--Round " << count << " Game " << game_count << " --\n";
+        std::cout << "Player 0's deck: ";
+        printCards(decks[0]);
+        std::cout << "Player 1's deck: ";
+        printCards(decks[1]);
+        if (count > 1) {
+            auto [it0, success0] = ref_decks0.insert(decks[0]);
+            auto [it1, success1] = ref_decks1.insert(decks[1]);
+            if (!success0 && !success1) {
+                std::cout << "Repetition, player 0 wins\n";
+                return 0;
+            }
+        }
 
-        if (top_card_1 > top_card_2)
-            passCard(deck2, deck1);
-        else
-            passCard(deck1, deck2);
+        auto top_card_0 = decks[0].front();
+        std::cout << "Player 0 plays " << top_card_0 << "\n";
+        auto top_card_1 = decks[1].front();
+        std::cout << "Player 1 plays " << top_card_1 << "\n";
 
-        std::cout << "Round " << count++ << "\n";
-    } while(!deck1.empty() && !deck2.empty());
-    if (deck1.empty())
-        return {deck2, deck1};
-    return {deck1, deck2};
+        if (top_card_0 <= decks[0].size() - 1 && top_card_1 <= decks[1].size() - 1) {
+            auto deck0_it = decks[0].begin() + 1;
+            auto deck1_it = decks[1].begin() + 1;
+            std::array<Deck, 2> subdecks = {Deck(deck0_it, deck0_it+top_card_0),
+                                            Deck(deck1_it, deck1_it+top_card_1)};
+            std::cout << "Playing a subgame to determine the winner...\n";
+            winner = playGame(subdecks);
+        } else {
+            winner = top_card_0 > top_card_1 ? 0 : 1;
+            std::cout << "Player " << winner << " wins round " << count << " of game " << game_count << "\n";
+        }
+        passCard(decks[!winner], decks[winner]);
+        ++count;
+    } while(!decks[0].empty() && !decks[1].empty());
+
+    return winner;
 }
 
 int main() {
     auto start = std::chrono::system_clock::now();
 
-    auto [deck1, deck2] = readData();
+    auto decks = readData();
 
-    auto [winner, looser] = playGame(std::move(deck1), std::move(deck2));
+
+    auto winner = playGame(decks);
 
     int multiplier = 1;
-    int result = std::accumulate(winner.rbegin(), winner.rend(), 0, [&multiplier](auto sum, auto current) {
+    int result = std::accumulate(decks[winner].rbegin(), decks[winner].rend(), 0, [&multiplier](auto sum, auto current) {
         return sum + (multiplier++) * current;
     });
 
